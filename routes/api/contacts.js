@@ -13,9 +13,9 @@ const contactSchema = Joi.object({
   phone: Joi.string().min(9).required(),
 });
 const putSchema = Joi.object({
-  name: Joi.string().min(3),
-  email: Joi.string().email(),
-  phone: Joi.string().min(9),
+  name: Joi.string().min(3).required(),
+  email: Joi.string().email().required(),
+  phone: Joi.string().min(9).required(),
 });
 
 async function listContacts() {
@@ -112,14 +112,17 @@ router.get("/:contactId", async (req, res, next) => {
 router.post("/", async (req, res, next) => {
   const { error } = contactSchema.validate(req.body);
   if (error) {
-    return res.status(400).json({ message: error.details[0].message });
+    return res.status(400).send(error.details[0].message);
   }
+  try {
+    const { name, email, phone } = req.body;
+    const contacts = await listContacts();
+    const newContactsList = await addContact(contacts, name, email, phone);
 
-  const { name, email, phone } = req.body;
-  const contacts = await listContacts();
-  const newContactsList = await addContact(contacts, name, email, phone);
-
-  res.status(201).json({ newContactsList });
+    res.status(201).json({ newContactsList });
+  } catch (err) {
+    console.log(err);
+  }
 });
 
 router.delete("/:contactId", async (req, res, next) => {
@@ -140,7 +143,7 @@ router.delete("/:contactId", async (req, res, next) => {
 router.put("/:contactId", async (req, res, next) => {
   const { error } = putSchema.validate(req.body);
   if (error) {
-    return res.status(400).json({ message: error.details[0].message });
+    return res.status(400).send(error.details[0].message);
   }
 
   try {
