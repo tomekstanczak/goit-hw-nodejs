@@ -25,7 +25,7 @@ const getContact = async (req, res, next) => {
     if (foundContact !== null) {
       res.status(200).json({ foundContact });
     } else {
-      next();
+      res.status(404).json({ message: "Contact do not exist" });
     }
   } catch (err) {
     next(err);
