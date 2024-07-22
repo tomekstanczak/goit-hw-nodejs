@@ -1,5 +1,4 @@
 const passport = require("passport");
-const User = require("../models/users.js");
 
 function authMiddleware(req, res, next) {
   passport.authenticate(
@@ -12,12 +11,12 @@ function authMiddleware(req, res, next) {
         return res.status(401).json({ message: "Unauthorized" });
       }
 
-      const dbUser = await User.findById(user._id);
-      if (!dbUser || dbUser.token === null) {
+      if (!user || user.token === null) {
         return res.status(401).json({ message: "Unauthorized" });
       }
 
-      res.locals.user = user;
+      req.user = user;
+
       next();
     }
   )(req, res, next);

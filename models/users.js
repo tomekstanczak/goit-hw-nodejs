@@ -1,5 +1,6 @@
 const mongoose = require("mongoose");
 const bCrypt = require("bcrypt");
+const Joi = require("joi");
 
 const userSchema = new mongoose.Schema({
   password: {
@@ -20,10 +21,6 @@ const userSchema = new mongoose.Schema({
     type: String,
     default: null,
   },
-  owner: {
-    type: mongoose.Schema.Types.ObjectId,
-    ref: "user",
-  },
 });
 
 userSchema.methods.setPassword = async function (password) {
@@ -34,6 +31,11 @@ userSchema.methods.validPassword = async function (password) {
   return await bCrypt.compare(password, this.password);
 };
 
+const signupSchema = Joi.object({
+  email: Joi.string().email().required(),
+  password: Joi.string().min(6).required(),
+});
+
 const User = mongoose.model("user", userSchema, "users");
 
-module.exports = User;
+module.exports = { User, signupSchema };

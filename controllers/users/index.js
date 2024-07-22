@@ -1,11 +1,16 @@
-const { newUserSignup, userIsLoggingIn } = require("./services.js");
-const User = require("../../models/users.js");
+const { User, signupSchema } = require("../../models/users.js");
 const jwt = require("jsonwebtoken");
 
 const signup = async (req, res, next) => {
+  const { error } = signupSchema.validate(req.body);
+
+  if (error) {
+    return res.status(400).json({ message: error.message });
+  }
+
   const { password, email } = req.body;
 
-  const user = await newUserSignup(email);
+  const user = await User.findOne({ email }).lean();
   if (user) {
     return res.status(409).json({ message: "Email in use" });
   }
@@ -21,7 +26,8 @@ const signup = async (req, res, next) => {
 
 const login = async (req, res, next) => {
   const { email, password } = req.body;
-  const user = await userIsLoggingIn(email);
+
+  const user = await User.findOne({ email });
 
   if (!user) {
     return res.status(401).json({ message: "User not found" });
@@ -30,7 +36,6 @@ const login = async (req, res, next) => {
   if (isPasswordIsValidate) {
     const payload = {
       id: user._id,
-      email: user.email,
     };
     const token = jwt.sign(payload, process.env.SECRET, { expiresIn: "30d" });
 
@@ -45,16 +50,9 @@ const login = async (req, res, next) => {
 
 const logout = async (req, res, next) => {
   try {
-    const authHeader = req.headers.authorization;
-    if (!authHeader) {
-      return res.status(401).json({ message: "Not authorized" });
-    }
+    const user = req.user;
 
-    const token = authHeader.split(" ")[1];
-    const decoded = jwt.verify(token, process.env.SECRET);
-
-    const user = await User.findById(decoded.id);
-    if (!user) {
+    if (user.token === null) {
       return res.status(401).json({ message: "Not authorized" });
     }
 
@@ -69,16 +67,9 @@ const logout = async (req, res, next) => {
 
 const currentUser = async (req, res, next) => {
   try {
-    const authHeader = req.headers.authorization;
-    if (!authHeader) {
-      return res.status(401).json({ message: "Not authorized" });
-    }
+    const user = req.user;
 
-    const token = authHeader.split(" ")[1];
-    const decoded = jwt.verify(token, process.env.SECRET);
-
-    const user = await User.findById(decoded.id);
-    if (!user) {
+    if (user.token === null) {
       return res.status(401).json({ message: "Not authorized" });
     }
 
