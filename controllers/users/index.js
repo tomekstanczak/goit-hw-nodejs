@@ -52,10 +52,6 @@ const logout = async (req, res, next) => {
   try {
     const user = req.user;
 
-    if (user.token === null) {
-      return res.status(401).json({ message: "Not authorized" });
-    }
-
     user.token = null;
     await user.save();
 
@@ -68,10 +64,6 @@ const logout = async (req, res, next) => {
 const currentUser = async (req, res, next) => {
   try {
     const user = req.user;
-
-    if (user.token === null) {
-      return res.status(401).json({ message: "Not authorized" });
-    }
 
     const email = user.email;
     const subscription = user.subscription;

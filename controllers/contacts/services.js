@@ -1,25 +1,18 @@
 const Contact = require("../../models/contacts");
 
-const fetchContacts = () => {
-  return Contact.getAll();
-};
-
-const fetchUserContacts = (userId) => {
+const fetchContacts = (userId) => {
   return Contact.find({ owner: userId });
 };
 
-const fetchContact = (id) => {
-  return Contact.findById({ _id: id });
+const fetchContact = ({ id, userId }) => {
+  return Contact.findById({ _id: id, owner: userId });
 };
 
 const addContact = ({ name, email, phone, owner }) => {
   return Contact.create({ name, email, phone, owner });
 };
-const removeContact = (id) => {
-  return Contact.deleteOne({ _id: id });
-};
 
-const removeUserContact = ({ id, owner }) => {
+const removeContact = ({ id, owner }) => {
   return Contact.deleteOne({ _id: id, owner: owner });
 };
 
@@ -44,8 +37,6 @@ module.exports = {
   fetchContact,
   addContact,
   removeContact,
-  removeUserContact,
   updateContact,
   updateStatusContact,
-  fetchUserContacts,
 };

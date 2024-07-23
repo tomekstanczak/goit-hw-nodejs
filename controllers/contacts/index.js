@@ -1,27 +1,16 @@
 const {
   fetchContacts,
-  fetchUserContacts,
   fetchContact,
   addContact,
   removeContact,
-  removeUserContact,
   updateContact,
   updateStatusContact,
 } = require("./services");
 
 const getAllContacts = async (req, res, next) => {
   try {
-    const contacts = await fetchContacts();
-    res.status(200).json(contacts);
-  } catch (err) {
-    next(err);
-  }
-};
-
-const getAllUserContacts = async (req, res, next) => {
-  try {
     const userId = req.user._id;
-    const contacts = await fetchUserContacts(userId);
+    const contacts = await fetchContacts(userId);
     res.status(200).json(contacts);
   } catch (err) {
     next(err);
@@ -31,8 +20,8 @@ const getAllUserContacts = async (req, res, next) => {
 const getContact = async (req, res, next) => {
   try {
     const id = req.params.contactId;
-
-    const foundContact = await fetchContact(id);
+    const userId = req.user._id;
+    const foundContact = await fetchContact({ id, userId });
 
     if (foundContact !== null) {
       res.status(200).json({ foundContact });
@@ -57,20 +46,10 @@ const postContact = async (req, res, next) => {
 };
 
 const deleteContact = async (req, res, next) => {
-  const id = req.params.contactId;
-  try {
-    await removeContact(id);
-    res.status(200).send({ message: "Contact deleted" });
-  } catch (err) {
-    next(err);
-  }
-};
-
-const deleteUserContact = async (req, res, next) => {
   const owner = req.user._id;
   const id = req.params.contactId;
   try {
-    await removeUserContact(id, owner);
+    await removeContact(id, owner);
     res.status(200).send({ message: "Contact deleted" });
   } catch (err) {
     next(err);
@@ -119,8 +98,6 @@ module.exports = {
   getContact,
   postContact,
   deleteContact,
-  deleteUserContact,
   putContact,
   patchContact,
-  getAllUserContacts,
 };
