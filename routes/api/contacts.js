@@ -7,19 +7,20 @@ const {
   putContact,
   patchContact,
 } = require("../../controllers/contacts/index");
+const authMiddleware = require("../../middleware/jwt.js");
 
 const router = express.Router();
 
-router.get("/", getAllContacts);
+router.get("/", authMiddleware, getAllContacts);
 
-router.get("/:contactId", getContact);
+router.get("/:contactId", authMiddleware, getContact);
 
-router.post("/", postContact);
+router.post("/", authMiddleware, postContact);
 
-router.delete("/:contactId", deleteContact);
+router.delete("/:contactId", authMiddleware, deleteContact);
 
-router.put("/:contactId", putContact);
+router.put("/:contactId", authMiddleware, putContact);
 
-router.patch("/:contactId/favorite", patchContact);
+router.patch("/:contactId/favorite", authMiddleware, patchContact);
 
 module.exports = router;

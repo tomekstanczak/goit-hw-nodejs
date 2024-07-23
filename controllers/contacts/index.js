@@ -9,7 +9,8 @@ const {
 
 const getAllContacts = async (req, res, next) => {
   try {
-    const contacts = await fetchContacts();
+    const userId = req.user._id;
+    const contacts = await fetchContacts(userId);
     res.status(200).json(contacts);
   } catch (err) {
     next(err);
@@ -19,8 +20,8 @@ const getAllContacts = async (req, res, next) => {
 const getContact = async (req, res, next) => {
   try {
     const id = req.params.contactId;
-
-    const foundContact = await fetchContact(id);
+    const userId = req.user._id;
+    const foundContact = await fetchContact({ id, userId });
 
     if (foundContact !== null) {
       res.status(200).json({ foundContact });
@@ -33,9 +34,11 @@ const getContact = async (req, res, next) => {
 };
 
 const postContact = async (req, res, next) => {
+  const owner = req.user._id;
   const { name, email, phone } = req.body;
+  console.log(req.body);
   try {
-    const newContactsList = await addContact({ name, email, phone });
+    const newContactsList = await addContact({ name, email, phone, owner });
     res.status(201).json({ newContactsList });
   } catch (err) {
     next(err);
@@ -43,9 +46,10 @@ const postContact = async (req, res, next) => {
 };
 
 const deleteContact = async (req, res, next) => {
+  const owner = req.user._id;
   const id = req.params.contactId;
   try {
-    await removeContact(id);
+    await removeContact(id, owner);
     res.status(200).send({ message: "Contact deleted" });
   } catch (err) {
     next(err);
