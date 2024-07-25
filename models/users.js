@@ -21,6 +21,9 @@ const userSchema = new mongoose.Schema({
     type: String,
     default: null,
   },
+  avatarURL: {
+    type: String,
+  },
 });
 
 userSchema.methods.setPassword = async function (password) {

@@ -3,6 +3,7 @@ const logger = require("morgan");
 const cors = require("cors");
 const mongoose = require("mongoose");
 const jwtStrategy = require("./config/jwt.js");
+const path = require("path");
 
 require("dotenv").config();
 jwtStrategy();
@@ -20,6 +21,11 @@ const formatsLogger = app.get("env") === "development" ? "dev" : "short";
 app.use(logger(formatsLogger));
 app.use(cors());
 app.use(express.json());
+
+app.use("/api/contacts", contactsRouter);
+app.use("/api/users", authRouter);
+
+app.use(express.static(path.resolve(__dirname, "./public")));
 
 app.use("/api/contacts", contactsRouter);
 app.use("/api/users", authRouter);

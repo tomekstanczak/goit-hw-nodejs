@@ -1,5 +1,10 @@
 const { User, signupSchema } = require("../../models/users.js");
 const jwt = require("jsonwebtoken");
+const gravatar = require("gravatar");
+const Jimp = require("jimp");
+const fs = require("fs/promises");
+const path = require("path");
+const { v4: uuidV4 } = require("uuid");
 
 const signup = async (req, res, next) => {
   const { error } = signupSchema.validate(req.body);
@@ -15,7 +20,9 @@ const signup = async (req, res, next) => {
     return res.status(409).json({ message: "Email in use" });
   }
   try {
+    const avatar = gravatar.url(email, { s: "250", r: "pg", d: "404" });
     const newUser = new User({ email });
+    newUser.avatarURL = avatar;
     await newUser.setPassword(password);
     await newUser.save();
     return res.status(201).json({ message: "Created" });
@@ -74,4 +81,49 @@ const currentUser = async (req, res, next) => {
   }
 };
 
-module.exports = { signup, login, logout, currentUser };
+const avatarUpdate = async (req, res, next) => {
+  try {
+    if (!req.file) {
+      return res.status(400).json({ message: "No file uploaded" });
+    }
+
+    const storeImageDir = path.join(process.cwd(), "public/avatars");
+
+    const { path: tempPath } = req.file;
+
+    console.log(`Temp Path: ${tempPath}`);
+    console.log(`Store Image Dir: ${storeImageDir}`);
+
+    const extension = path.extname(tempPath);
+    const fileName = `${uuidV4()}${extension}`;
+    const filePath = path.join(storeImageDir, fileName);
+
+    const image = await Jimp.read(tempPath);
+    await image.resize(250, 250).writeAsync(filePath);
+    await fs.unlink(tempPath);
+
+    const avatarURL = `/avatars/${fileName}`;
+
+    if (req.user.avatarURL) {
+      const oldAvatarPath = path.join(
+        process.cwd(),
+        "public",
+        req.user.avatarURL
+      );
+      try {
+        await fs.unlink(oldAvatarPath);
+      } catch (err) {
+        console.error(`Failed to delete old avatar: ${oldAvatarPath}`, err);
+      }
+    }
+
+    req.user.avatarURL = avatarURL;
+    await req.user.save();
+
+    res.status(200).json({ avatarURL });
+  } catch (err) {
+    next(err);
+  }
+};
+
+module.exports = { signup, login, logout, currentUser, avatarUpdate };
