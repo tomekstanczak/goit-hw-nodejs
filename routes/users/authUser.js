@@ -7,6 +7,7 @@ const {
   logout,
   currentUser,
   avatarUpdate,
+  userVerification,
 } = require("../../controllers/users/index.js");
 const authMiddleware = require("../../middleware/jwt.js");
 
@@ -19,6 +20,8 @@ router.post("/login", login);
 router.post("/logout", authMiddleware, logout);
 
 router.get("/current", authMiddleware, currentUser);
+
+router.get("/verify/:verificationToken", authMiddleware, userVerification);
 
 router.patch(
   "/avatar",

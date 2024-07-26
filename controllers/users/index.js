@@ -23,6 +23,7 @@ const signup = async (req, res, next) => {
     const avatar = gravatar.url(email, { s: "250", r: "pg", d: "404" });
     const newUser = new User({ email });
     newUser.avatarURL = avatar;
+    newUser.verificationToken = uuidV4();
     await newUser.setPassword(password);
     await newUser.save();
     return res.status(201).json({ message: "Created" });
@@ -126,4 +127,30 @@ const avatarUpdate = async (req, res, next) => {
   }
 };
 
-module.exports = { signup, login, logout, currentUser, avatarUpdate };
+const userVerification = async (req, res, next) => {
+  try {
+    const lookingVToken = req.params.verificationToken;
+    const user = await User.find({ verificationToken: lookingVToken });
+
+    if (!user) {
+      return res.status(404).json({ message: "User not found" });
+    }
+
+    user.verificationToken = null;
+    user.verify = true;
+    await user.save();
+
+    res.status(200).json({ message: "Verification successful" });
+  } catch (err) {
+    next(err);
+  }
+};
+
+module.exports = {
+  signup,
+  login,
+  logout,
+  currentUser,
+  avatarUpdate,
+  userVerification,
+};

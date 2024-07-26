@@ -4,6 +4,9 @@ const mongoose = require("mongoose");
 const path = require("path");
 const jwtStrategy = require("./config/jwt.js");
 
+const contactsRouter = require("./routes/api/contacts");
+const authRouter = require("./routes/users/authUser.js");
+
 const app = express();
 require("dotenv").config();
 
@@ -13,11 +16,6 @@ app.use(express.static(path.resolve(__dirname, "./public")));
 
 jwtStrategy();
 
-const contactsRouter = require("./routes/api/contacts");
-const authRouter = require("./routes/users/authUser.js");
-
-app.use("/api/contacts", contactsRouter);
-app.use("/api/users", authRouter);
 app.use("/api/contacts", contactsRouter);
 app.use("/api/users", authRouter);
 
