@@ -5,6 +5,7 @@ const Jimp = require("jimp");
 const fs = require("fs/promises");
 const path = require("path");
 const { v4: uuidV4 } = require("uuid");
+const sendVerificationEmail = require("../../config/email.js");
 
 const signup = async (req, res, next) => {
   const { error } = signupSchema.validate(req.body);
@@ -26,6 +27,13 @@ const signup = async (req, res, next) => {
     newUser.verificationToken = uuidV4();
     await newUser.setPassword(password);
     await newUser.save();
+
+    const code = newUser.verificationToken;
+
+    const html = `<h1>Welcome</h1><a href="http://localhost:3000/api/users/verify/${code}">Click on the message to finish the verification</a>`;
+
+    await sendVerificationEmail(email, html);
+
     return res.status(201).json({ message: "Created" });
   } catch (err) {
     next(err);
@@ -39,6 +47,10 @@ const login = async (req, res, next) => {
 
   if (!user) {
     return res.status(401).json({ message: "User not found" });
+  }
+
+  if (user.verify === false) {
+    return res.status(401).json({ message: "User is not verified" });
   }
   const isPasswordIsValidate = await user.validPassword(password);
   if (isPasswordIsValidate) {
