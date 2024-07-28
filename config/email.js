@@ -13,15 +13,13 @@ const transporter = nodemailer.createTransport({
   },
 });
 
-async function sendVerificationEmail(to, html) {
-  const info = await transporter.sendMail({
+async function sendVerificationEmail(to, code) {
+  await transporter.sendMail({
     from: "<test@gmail.com>",
     to,
     subject: "Contacts app verification",
-    html,
+    html: `<h1>Welcome</h1><a href="http://localhost:3000/api/users/verify/${code}">Click on the message to finish the verification.</a>`,
   });
-
-  console.log("Message sent: %s", info.messageId);
 }
 
 module.exports = sendVerificationEmail;

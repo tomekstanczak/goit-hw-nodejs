@@ -30,9 +30,7 @@ const signup = async (req, res, next) => {
 
     const code = newUser.verificationToken;
 
-    const html = `<h1>Welcome</h1><a href="http://localhost:3000/api/users/verify/${code}">Click on the message to finish the verification</a>`;
-
-    await sendVerificationEmail(email, html);
+    await sendVerificationEmail(email, code);
 
     return res.status(201).json({ message: "Created" });
   } catch (err) {
@@ -104,9 +102,6 @@ const avatarUpdate = async (req, res, next) => {
 
     const { path: tempPath } = req.file;
 
-    console.log(`Temp Path: ${tempPath}`);
-    console.log(`Store Image Dir: ${storeImageDir}`);
-
     const extension = path.extname(tempPath);
     const fileName = `${uuidV4()}${extension}`;
     const filePath = path.join(storeImageDir, fileName);
@@ -158,6 +153,33 @@ const userVerification = async (req, res, next) => {
   }
 };
 
+const userResendVerification = async (req, res, next) => {
+  try {
+    const email = req.body;
+
+    if (!email) {
+      return res.status(400).json({ message: "missing required field email" });
+    }
+    const user = await User.findOne(email);
+
+    if (user.verify === true) {
+      return res
+        .status(400)
+        .json({ message: "Verification has already been passed" });
+    }
+
+    const code = user.verificationToken;
+
+    await sendVerificationEmail(email.email, code);
+
+    return res.status(200).json({
+      message: "Verification email sent",
+    });
+  } catch (err) {
+    next(err);
+  }
+};
+
 module.exports = {
   signup,
   login,
@@ -165,4 +187,5 @@ module.exports = {
   currentUser,
   avatarUpdate,
   userVerification,
+  userResendVerification,
 };
