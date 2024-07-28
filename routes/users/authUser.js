@@ -21,7 +21,7 @@ router.post("/logout", authMiddleware, logout);
 
 router.get("/current", authMiddleware, currentUser);
 
-router.get("/verify/:verificationToken", authMiddleware, userVerification);
+router.get("/verify/:verificationToken", userVerification);
 
 router.patch(
   "/avatar",

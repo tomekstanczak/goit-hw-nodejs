@@ -130,7 +130,7 @@ const avatarUpdate = async (req, res, next) => {
 const userVerification = async (req, res, next) => {
   try {
     const lookingVToken = req.params.verificationToken;
-    const user = await User.find({ verificationToken: lookingVToken });
+    const user = await User.findOne({ verificationToken: lookingVToken });
 
     if (!user) {
       return res.status(404).json({ message: "User not found" });
