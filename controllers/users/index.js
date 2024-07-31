@@ -5,6 +5,7 @@ const Jimp = require("jimp");
 const fs = require("fs/promises");
 const path = require("path");
 const { v4: uuidV4 } = require("uuid");
+const sendVerificationEmail = require("../../config/email.js");
 
 const signup = async (req, res, next) => {
   const { error } = signupSchema.validate(req.body);
@@ -23,8 +24,14 @@ const signup = async (req, res, next) => {
     const avatar = gravatar.url(email, { s: "250", r: "pg", d: "404" });
     const newUser = new User({ email });
     newUser.avatarURL = avatar;
+    newUser.verificationToken = uuidV4();
     await newUser.setPassword(password);
     await newUser.save();
+
+    const code = newUser.verificationToken;
+
+    await sendVerificationEmail(email, code);
+
     return res.status(201).json({ message: "Created" });
   } catch (err) {
     next(err);
@@ -38,6 +45,10 @@ const login = async (req, res, next) => {
 
   if (!user) {
     return res.status(401).json({ message: "User not found" });
+  }
+
+  if (user.verify === false) {
+    return res.status(401).json({ message: "User is not verified" });
   }
   const isPasswordIsValidate = await user.validPassword(password);
   if (isPasswordIsValidate) {
@@ -91,9 +102,6 @@ const avatarUpdate = async (req, res, next) => {
 
     const { path: tempPath } = req.file;
 
-    console.log(`Temp Path: ${tempPath}`);
-    console.log(`Store Image Dir: ${storeImageDir}`);
-
     const extension = path.extname(tempPath);
     const fileName = `${uuidV4()}${extension}`;
     const filePath = path.join(storeImageDir, fileName);
@@ -126,4 +134,58 @@ const avatarUpdate = async (req, res, next) => {
   }
 };
 
-module.exports = { signup, login, logout, currentUser, avatarUpdate };
+const userVerification = async (req, res, next) => {
+  try {
+    const lookingVToken = req.params.verificationToken;
+    const user = await User.findOne({ verificationToken: lookingVToken });
+
+    if (!user) {
+      return res.status(404).json({ message: "User not found" });
+    }
+
+    user.verificationToken = null;
+    user.verify = true;
+    await user.save();
+
+    res.status(200).json({ message: "Verification successful" });
+  } catch (err) {
+    next(err);
+  }
+};
+
+const userResendVerification = async (req, res, next) => {
+  try {
+    const email = req.body;
+
+    if (!email) {
+      return res.status(400).json({ message: "missing required field email" });
+    }
+    const user = await User.findOne(email);
+
+    if (user.verify === true) {
+      return res
+        .status(400)
+        .json({ message: "Verification has already been passed" });
+    }
+
+    const code = user.verificationToken;
+
+    await sendVerificationEmail(email.email, code);
+
+    return res.status(200).json({
+      message: "Verification email sent",
+    });
+  } catch (err) {
+    next(err);
+  }
+};
+
+module.exports = {
+  signup,
+  login,
+  logout,
+  currentUser,
+  avatarUpdate,
+  userVerification,
+  userResendVerification,
+};
